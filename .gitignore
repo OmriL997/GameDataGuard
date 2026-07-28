@@ -1,0 +1,71 @@
+# Build output
+build/
+out/
+cmake-build-*/
+
+# Generated files
+*.gdgpack
+*.gdgpack.tmp
+*.json.tmp
+report*.json
+validation_*.json
+sample.gdgpack
+
+# CMake generated
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+
+# MSVC
+*.suo
+*.user
+*.userosscache
+*.sln.docview
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.opensdf
+*.sdf
+*.sln
+*.VC.db
+*.VC.VC.opendb
+x64/
+x86/
+*.obj
+*.pdb
+*.ilk
+*.lib
+*.exp
+*.dll
+*.exe
+
+# GCC / Clang
+*.o
+*.a
+*.so
+*.dylib
+*.d
+*.dSYM/
+
+# Ninja
+.ninja_deps
+.ninja_log
+
+# VS Code (do not ignore shared config)
+.vscode/c_cpp_properties.json
+.vscode/.browse.VC.db*
+
+# JetBrains
+.idea/
+cmake-build-*/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini

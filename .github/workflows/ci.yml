@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cmake_args: >-
+              -DCMAKE_BUILD_TYPE=Release
+              -DGDG_WARNINGS_AS_ERRORS=ON
+          - os: ubuntu-latest
+            compiler: gcc-sanitizers
+            cmake_args: >-
+              -DCMAKE_BUILD_TYPE=Debug
+              -DGDG_WARNINGS_AS_ERRORS=ON
+              -DGDG_ENABLE_SANITIZERS=ON
+          - os: windows-latest
+            compiler: msvc
+            cmake_args: >-
+              -DCMAKE_BUILD_TYPE=Release
+              -DGDG_WARNINGS_AS_ERRORS=ON
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -B build ${{ matrix.cmake_args }}
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B build ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Run Tests
+        run: ctest --test-dir build --output-on-failure -C Release
+
+      - name: Validate Sample Data (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          ./build/gamedataguard validate sample_data/valid --report report.json
+          echo "Exit code: $?"
+
+      - name: Validate Sample Data (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\build\Release\gamedataguard.exe validate sample_data/valid --report report.json
+
+      - name: Build Sample Pack (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          ./build/gamedataguard build sample_data/valid sample.gdgpack
+
+      - name: Build Sample Pack (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\build\Release\gamedataguard.exe build sample_data/valid sample.gdgpack
+
+      - name: Upload Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report-${{ matrix.os }}-${{ matrix.compiler }}
+          path: report.json
+          if-no-files-found: ignore
+
+      - name: Upload Pack Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-pack-${{ matrix.os }}-${{ matrix.compiler }}
+          path: sample.gdgpack
+          if-no-files-found: ignore

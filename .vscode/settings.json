@@ -1,0 +1,14 @@
+{
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.configureArgs": [
+    "-DCMAKE_BUILD_TYPE=Debug"
+  ],
+  "cmake.buildArgs": ["--parallel"],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-vscode.cpptools",
+  "C_Cpp.default.cppStandard": "c++17",
+  "files.associations": {
+    "*.hpp": "cpp",
+    "*.cpp": "cpp"
+  }
+}
