@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "required_locales": ["en", "ja", "he"],
+  "start_quest_ids": ["quest_intro"]
+}

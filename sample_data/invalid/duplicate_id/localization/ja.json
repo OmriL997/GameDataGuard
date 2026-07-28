@@ -1,0 +1,23 @@
+{
+  "npc.guide.name": "ガイド",
+  "npc.merchant.name": "商人",
+  "npc.elder.name": "長老",
+  "item.potion.name": "ポーション",
+  "item.potion.description": "体力を回復する。",
+  "item.sword.name": "鉄の剣",
+  "item.sword.description": "頑丈な鉄の剣。",
+  "item.shield.name": "木の盾",
+  "item.shield.description": "シンプルな木の盾。",
+  "item.map.name": "町の地図",
+  "item.map.description": "周辺の地図。",
+  "quest.intro.title": "始まり",
+  "quest.intro.description": "ガイドに話しかけて旅を始めよう。",
+  "quest.village.title": "村のお使い",
+  "quest.village.description": "村の商人を手伝おう。",
+  "quest.forest.title": "森へ",
+  "quest.forest.description": "村の外の森を探索しよう。",
+  "quest.final.title": "長老の試練",
+  "quest.final.description": "長老に会って試練を完了せよ。",
+  "quest.side.title": "商人の頼み",
+  "quest.side.description": "商人が追加の仕事を頼んでいる。"
+}

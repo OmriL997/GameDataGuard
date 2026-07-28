@@ -1,0 +1,50 @@
+[
+  {
+    "id": "quest_intro",
+    "title_key": "quest.intro.title",
+    "description_key": "quest.intro.description",
+    "giver_npc_id": "npc_guide",
+    "reward_item_ids": ["item_potion"],
+    "next_quest_ids": ["quest_village", "quest_forest"]
+  },
+  {
+    "id": "quest_village",
+    "title_key": "quest.village.title",
+    "description_key": "quest.village.description",
+    "giver_npc_id": "npc_merchant",
+    "reward_item_ids": ["item_map"],
+    "next_quest_ids": ["quest_final", "quest_side"]
+  },
+  {
+    "id": "quest_forest",
+    "title_key": "quest.forest.title",
+    "description_key": "quest.forest.description",
+    "giver_npc_id": "npc_guide",
+    "reward_item_ids": ["item_sword"],
+    "next_quest_ids": ["quest_final"]
+  },
+  {
+    "id": "quest_final",
+    "title_key": "quest.final.title",
+    "description_key": "quest.final.description",
+    "giver_npc_id": "npc_elder",
+    "reward_item_ids": ["item_shield"],
+    "next_quest_ids": []
+  },
+  {
+    "id": "quest_side",
+    "title_key": "quest.side.title",
+    "description_key": "quest.side.description",
+    "giver_npc_id": "npc_merchant",
+    "reward_item_ids": ["item_potion"],
+    "next_quest_ids": []
+  },
+  {
+    "id": "quest_orphan",
+    "title_key": "quest.orphan.title",
+    "description_key": "quest.orphan.description",
+    "giver_npc_id": "npc_guide",
+    "reward_item_ids": [],
+    "next_quest_ids": []
+  }
+]

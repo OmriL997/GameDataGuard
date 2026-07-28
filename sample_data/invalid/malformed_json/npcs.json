@@ -1,0 +1,22 @@
+[
+  {
+    "id": "npc_guide",
+    "name_key": "npc.guide.name",
+    "max_hp": 100,
+    "attack": 5,
+    "defense": 10
+  },
+  {
+    "id": "npc_merchant",
+    "name_key": "npc.merchant.name",
+    "max_hp": 60,
+    "attack": 2,
+    "defense": 3
+  },
+  {
+    "id": "npc_elder",
+    "name_key": "npc.elder.name",
+    "max_hp": 80,
+    "attack": 0,
+    "defense": 5
+  }
