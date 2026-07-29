@@ -70,3 +70,4 @@ cmake-build-*/
 # Windows
 Thumbs.db
 desktop.ini
+.claude/settings.local.json
