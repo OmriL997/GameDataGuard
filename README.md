@@ -1,8 +1,6 @@
 # GameDataGuard
 
-**GameDataGuard** is a C++17 command-line tool that validates, diagnoses, and packages structured game data. It detects broken references, duplicate identifiers, localization gaps, invalid parameters, quest-graph cycles, and unreachable content before the data reaches the runtime build.
-
-C++17で実装したゲームデータ検証・パッケージングツールです。クエスト、NPC、アイテム、ローカライズデータを対象に、ID重複、参照不整合、翻訳キー不足、不正パラメータ、クエストグラフの循環および到達不能データをビルド前に検出します。
+**GameDataGuard** is a C++ tool that validates, diagnoses, and packages structured game data. It detects broken references, duplicate identifiers, localization gaps, invalid parameters, quest-graph cycles, and unreachable content before the data reaches the runtime build.
 
 > **Scope:** Portfolio-scale internal game-data validation tool. Production-inspired design intended to demonstrate modern C++17 practices across file I/O, data validation, graph analysis, deterministic packaging, and automated testing.
 
