@@ -158,7 +158,7 @@ GameDataGuard/
 |------|----------------|-------|
 | CMake | 3.21 | Downloads nlohmann/json and Catch2 via FetchContent |
 | C++ compiler | MSVC 2019+, GCC 9+, or Clang 10+ | C++17 required |
-| Internet access | — | Required for the first build (FetchContent downloads) |
+| Internet access | - | Required for the first build (FetchContent downloads) |
 | Git | Any | Required by CMake FetchContent |
 
 ---
@@ -168,7 +168,7 @@ GameDataGuard/
 Open a Developer Command Prompt for VS 2022 (or ensure MSVC is on the PATH).
 
 ```cmd
-git clone https://github.com/your-username/GameDataGuard.git
+git clone https://github.com/OmriL997/GameDataGuard.git
 cd GameDataGuard
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -182,7 +182,7 @@ build\Release\gamedataguard.exe validate sample_data\valid
 ## Linux Build Instructions
 
 ```bash
-git clone https://github.com/your-username/GameDataGuard.git
+git clone https://github.com/OmriL997/GameDataGuard.git
 cd GameDataGuard
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release
