@@ -1,8 +1,13 @@
 # GameDataGuard
 
-**GameDataGuard** is a C++17 game-data validation and packaging tool. It loads structured game data—NPCs, items, quests, and localization files—detects content problems before they reach a runtime build, and can package the validated data into a deterministic binary asset container. The tool is accessible both as a command-line executable and through a native Unity Editor integration.
+GameDataGuard is a C++17 tool that validates, diagnoses, and packages
+structured game data before it enters the runtime build. It includes a Unity Editor integration built through a native C++ DLL,
+a C-compatible API, and a C# P/Invoke wrapper, allowing designers to run
+validation and inspect structured diagnostics without leaving Unity.
 
-> **Scope:** Individual portfolio project with a production-inspired design. Developed to demonstrate C++17 game-development tooling, native plugin development, C#–C++ interoperability, graph analysis, deterministic packaging, automated testing, and CI/CD integration.
+> Scope: Individual portfolio project demonstrating modern C++17,
+> file I/O, graph analysis, deterministic packaging, native interoperability,
+> Unity editor tooling, automated testing, and CI.
 
 ---
 
