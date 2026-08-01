@@ -165,6 +165,75 @@ flowchart TD
 
 ---
 
+---
+
+## Unity Editor Integration Layer
+
+The optional `gamedataguard_unity` shared library adds a fourth layer on top of
+`gamedataguard_core` for use as a Unity Editor tool.
+
+```
+Unity EditorWindow  (GameDataGuardWindow.cs)
+        │
+        ▼
+C# interop wrapper  (GameDataGuardNative.cs)
+        │  P/Invoke  CallingConvention.Cdecl
+        ▼
+C ABI  (gamedataguard_unity.dll)
+  gdg_validate_directory_utf8()
+  gdg_free_string()
+        │
+        ▼
+gamedataguard_core  (static library)
+  load_game_data() → LoadResult
+  validate()       → ValidationResult
+```
+
+**Why a C ABI?**
+The Unity Editor calls native code through P/Invoke, which requires a stable C
+linkage.  C++ names are mangled and C++ object layouts are compiler-specific.
+Wrapping the C++ core in a plain `extern "C"` layer with fixed-width integer
+types and UTF-8 char pointers provides a stable, compiler-independent surface.
+
+**Memory ownership**
+`gdg_validate_directory_utf8` allocates the result JSON string with `new char[]`.
+The C# wrapper always releases it in a `finally` block using `gdg_free_string`.
+Nothing else crosses the ABI boundary: no STL types, no C++ exceptions, no
+shared ownership.
+
+**Exceptions**
+All C++ exceptions are caught at the boundary and converted to a `tool_error`
+JSON result.  The Unity Editor process is never at risk from a native exception.
+
+**JSON schema**
+The bridge returns a richer JSON schema than the file-based `JsonReporter`
+because the Unity caller needs to display structured diagnostics without writing
+a file:
+
+```json
+{
+  "status":       "passed | validation_failed | tool_error",
+  "errorCount":   0,
+  "warningCount": 0,
+  "message":      "",
+  "diagnostics":  [
+    { "severity": "error", "code": "GDG006",
+      "file": "quests.json", "path": "/0/giver_npc_id",
+      "message": "Referenced NPC does not exist." }
+  ]
+}
+```
+
+Severity strings are lower-case in the bridge JSON (unlike the CLI reporter
+which uses upper-case) to match idiomatic JSON conventions used by Unity's
+`JsonUtility` deserialiser.
+
+The `path` field is always present as a string; an absent optional path in the
+C++ `Diagnostic` struct is represented as an empty string so that Unity's
+`JsonUtility` does not have to handle JSON `null` values.
+
+---
+
 ## Important Design Decisions
 
 ### Deterministic output

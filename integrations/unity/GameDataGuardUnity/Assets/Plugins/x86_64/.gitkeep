@@ -1,0 +1,9 @@
+# This directory holds the Windows x86-64 native DLL for the Unity Editor plugin.
+#
+# The DLL is NOT committed to source control; it is built by CMake and copied
+# here using integrations/unity/scripts/copy_plugin.ps1.
+#
+# After copying, configure the Plugin Inspector in the Unity Editor:
+#   Any Platform : unchecked
+#   Editor       : checked
+#   Windows x86_64: checked

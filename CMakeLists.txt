@@ -8,8 +8,11 @@ project(GameDataGuard
 # ---------------------------------------------------------------
 # Options
 # ---------------------------------------------------------------
-option(GDG_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
-option(GDG_ENABLE_SANITIZERS  "Enable AddressSanitizer and UBSan (GCC/Clang only)" OFF)
+option(GDG_WARNINGS_AS_ERRORS  "Treat compiler warnings as errors" OFF)
+option(GDG_ENABLE_SANITIZERS   "Enable AddressSanitizer and UBSan (GCC/Clang only)" OFF)
+option(GDG_BUILD_UNITY_PLUGIN
+    "Build the Windows x86-64 Unity Editor native plugin (gamedataguard_unity.dll)"
+    OFF)
 
 # ---------------------------------------------------------------
 # C++ standard
@@ -49,6 +52,7 @@ function(gdg_set_warnings target)
         target_compile_options(${target} PRIVATE
             /W4
             /permissive-
+            /utf-8    # required on Japanese locale (code page 932) to read UTF-8 sources
             $<$<BOOL:${GDG_WARNINGS_AS_ERRORS}>:/WX>
         )
     else()
@@ -120,3 +124,38 @@ gdg_set_sanitizers(gamedataguard)
 # ---------------------------------------------------------------
 enable_testing()
 add_subdirectory(tests)
+
+# ---------------------------------------------------------------
+# Unity Editor native plug-in (Windows x86-64 only)
+# ---------------------------------------------------------------
+if(GDG_BUILD_UNITY_PLUGIN)
+    if(NOT WIN32)
+        message(FATAL_ERROR
+            "GDG_BUILD_UNITY_PLUGIN is only supported on Windows.")
+    endif()
+
+    add_library(gamedataguard_unity SHARED
+        integrations/unity/native/gamedataguard_unity.cpp
+    )
+
+    target_include_directories(gamedataguard_unity PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/integrations/unity/native
+    )
+
+    # GDG_UNITY_EXPORTS activates __declspec(dllexport) in the header.
+    target_compile_definitions(gamedataguard_unity PRIVATE GDG_UNITY_EXPORTS)
+
+    # gamedataguard_core is PUBLIC on nlohmann_json, so the bridge inherits
+    # the include directories automatically.
+    target_link_libraries(gamedataguard_unity PRIVATE gamedataguard_core)
+
+    set_target_properties(gamedataguard_unity PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+    )
+
+    gdg_set_warnings(gamedataguard_unity)
+
+    message(STATUS
+        "GameDataGuard: Unity plugin target enabled (gamedataguard_unity)")
+endif()

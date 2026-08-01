@@ -431,6 +431,162 @@ ctest --test-dir build --output-on-failure
 |--------|---------|-------------|
 | `GDG_WARNINGS_AS_ERRORS` | OFF | Treat all compiler warnings as errors |
 | `GDG_ENABLE_SANITIZERS` | OFF | Enable AddressSanitizer + UBSan (GCC/Clang only) |
+| `GDG_BUILD_UNITY_PLUGIN` | OFF | Build `gamedataguard_unity.dll` — Windows only |
+
+---
+
+## Unity Editor Integration
+
+### Purpose
+
+The Unity integration lets designers run GameDataGuard validation directly from
+inside the Unity Editor without leaving their workflow. The same C++ validation
+core used by the CLI is invoked through a native Windows DLL.
+
+### Architecture
+
+```
+Unity EditorWindow  (Tools > GameDataGuard)
+        │
+        ▼  C# P/Invoke
+C ABI wrapper  (gamedataguard_unity.dll)
+        │
+        ▼
+gamedataguard_core  (static library)
+```
+
+`gamedataguard_unity.dll` is a thin bridge that calls `load_game_data()` and
+`validate()` from `gamedataguard_core`, serialises the result to a UTF-8 JSON
+string, and returns it through a C-compatible API. No validation logic is
+duplicated; the Unity layer is presentation only.
+
+### Scope
+
+| Supported | Not supported |
+|-----------|---------------|
+| Windows x86-64 | macOS, Linux |
+| Unity Editor | Runtime player |
+| Directory validation | Runtime gameplay |
+
+> **Screenshot location:** `docs/screenshots/unity_window.png`
+> *(Add a real screenshot here after performing the manual smoke test.)*
+
+### Prerequisites
+
+- CMake 3.21+
+- MSVC 2019 or later (Visual Studio 2019 / 2022)
+- Unity 6 (6000.x), Editor only
+
+### Build the Native DLL
+
+```powershell
+# From the repository root
+cmake -B build -DGDG_BUILD_UNITY_PLUGIN=ON
+cmake --build build --config Release --target gamedataguard_unity
+```
+
+The DLL is produced at `build/Release/gamedataguard_unity.dll`.
+
+### Copy the DLL into the Unity Project
+
+```powershell
+.\integrations\unity\scripts\copy_plugin.ps1
+# or for Debug: .\integrations\unity\scripts\copy_plugin.ps1 -Configuration Debug
+```
+
+The script copies the DLL to
+`integrations/unity/GameDataGuardUnity/Assets/Plugins/x86_64/`.
+
+> **Important:** Close Unity before running this script.
+> Unity holds a file lock on the loaded DLL; replacing it while Unity is open
+> will fail. After copying, reopen Unity to load the new version.
+
+### Plugin Inspector Configuration
+
+After copying the DLL, configure it in the Unity Plugin Inspector:
+
+1. In the Project window, select
+   `Assets/Plugins/x86_64/gamedataguard_unity.dll`.
+2. In the Inspector:
+   - **Any Platform** → unchecked
+   - **Editor** → checked
+   - **Platform** → Windows, x86_64
+   - All other platforms → unchecked
+3. Click **Apply**.
+
+Unity generates a `.meta` file that records this configuration. Commit the
+`.meta` file so team members do not need to reconfigure manually.
+
+### Opening the Validation Window
+
+```
+Unity menu bar → Tools → GameDataGuard
+```
+
+### Using the Window
+
+1. Click **Select Directory** and choose a directory containing `manifest.json`,
+   `npcs.json`, `items.json`, `quests.json`, and a `localization/` subfolder.
+2. Click **Validate**.
+3. The window displays: status, error count, warning count, and a scrollable
+   list of structured diagnostics (severity, code, file, JSON path, message).
+4. Click **Clear** to reset.
+
+### How Native Memory Works
+
+`gdg_validate_directory_utf8` allocates a UTF-8 JSON string on the native heap.
+The C# wrapper releases it through `gdg_free_string` in a `finally` block,
+ensuring the buffer is freed even if JSON parsing fails. No native memory leaks
+into the garbage collector.
+
+### Why a C ABI
+
+Unity P/Invoke requires stable C linkage. C++ names are mangled and object
+layouts are compiler-specific. A plain `extern "C"` layer with fixed-width
+integer types and UTF-8 `char*` parameters provides a stable, version-independent
+surface that any C# runtime can call.
+
+### How Failures are Represented
+
+| Scenario | `status` | Return code |
+|----------|----------|-------------|
+| Validation passed | `"passed"` | 0 |
+| Validation errors found | `"validation_failed"` | 1 |
+| Missing file, malformed JSON, or internal error | `"tool_error"` | 2 |
+
+Tool errors include a human-readable `message` field shown in the window. All
+C++ exceptions are caught at the DLL boundary and converted to `tool_error`
+results; the Unity Editor process is never at risk from a native exception.
+
+### CMake Option
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `GDG_BUILD_UNITY_PLUGIN` | OFF | Build `gamedataguard_unity.dll` (Windows only) |
+
+### Manual Smoke Test Checklist
+
+Perform these steps after building and copying the DLL.
+These cannot be automated without a licensed Unity installation.
+
+- [ ] 1. Unity opens without compilation errors.
+- [ ] 2. `Tools > GameDataGuard` appears in the menu bar.
+- [ ] 3. The GameDataGuard window opens.
+- [ ] 4. The native DLL loads without a `DllNotFoundException`.
+- [ ] 5. `sample_data/valid` → status PASSED, 0 errors.
+- [ ] 6. `sample_data/invalid/missing_reference` → GDG006 diagnostic visible.
+- [ ] 7. `sample_data/invalid/quest_cycle` → GDG013 diagnostic visible.
+- [ ] 8. A nonexistent path → readable tool-error message in the window.
+- [ ] 9. Running Validate a second time on the same directory works correctly.
+- [ ] 10. After rebuilding the DLL and restarting Unity, the new version loads.
+
+### Current Limitations
+
+- Windows x86-64 and Unity Editor only; no runtime player support.
+- The DLL must be copied manually after each rebuild using `copy_plugin.ps1`.
+- Unity must be closed before replacing a loaded DLL.
+- No `.meta` file for the plugin is committed until Unity has been opened and
+  the Plugin Inspector has been configured and saved at least once.
 
 ---
 

@@ -30,6 +30,7 @@ jobs:
             cmake_args: >-
               -DCMAKE_BUILD_TYPE=Release
               -DGDG_WARNINGS_AS_ERRORS=ON
+              -DGDG_BUILD_UNITY_PLUGIN=ON
 
     steps:
       - name: Checkout
@@ -86,3 +87,11 @@ jobs:
           name: sample-pack-${{ matrix.os }}-${{ matrix.compiler }}
           path: sample.gdgpack
           if-no-files-found: ignore
+
+      - name: Upload Unity Plugin DLL
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamedataguard-unity-plugin-windows-x64
+          path: build/Release/gamedataguard_unity.dll
+          if-no-files-found: error
