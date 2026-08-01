@@ -33,8 +33,7 @@ The **GameDataGuard EditorWindow** is opened via **Tools → GameDataGuard**. It
 
 **Successful validation — `sample_data/valid`**
 
-![Unity EditorWindow showing validation passed with zero errors and zero warnings](<img width="395" height="137" alt="Screenshot 2026-08-01 164822" src="https://github.com/user-attachments/assets/5f6e49dd-8343-43d0-a132-7c7ccf2c79b9" />
-)
+![Unity EditorWindow showing validation passed with zero errors and zero warnings](docs/images/unity/Screenshot_2026-08-01_164822.png)
 
 *Status banner shows PASSED. The diagnostic list is empty.*
 
@@ -42,8 +41,7 @@ The **GameDataGuard EditorWindow** is opened via **Tools → GameDataGuard**. It
 
 **Validation error — missing NPC reference (GDG006)**
 
-![Unity EditorWindow showing validation failed with one error: GDG006 missing NPC reference](<img width="397" height="170" alt="Screenshot 2026-08-01 164945" src="https://github.com/user-attachments/assets/292d39c4-9926-4bac-824e-01903a9de820" />
-)
+![Unity EditorWindow showing validation failed with one error: GDG006 missing NPC reference](docs/images/unity/Screenshot_2026-08-01_164945.png)
 
 *The quest at index 0 references an NPC ID that does not exist. The exact JSON pointer and diagnostic code are shown inline.*
 
@@ -51,8 +49,7 @@ The **GameDataGuard EditorWindow** is opened via **Tools → GameDataGuard**. It
 
 **Validation error — quest graph cycle (GDG013)**
 
-![Unity EditorWindow showing validation failed with one error: GDG013 quest graph cycle](<img width="395" height="179" alt="Screenshot 2026-08-01 165002" src="https://github.com/user-attachments/assets/ed825053-7032-4349-a047-bc2e82ff5a12" />
-)
+![Unity EditorWindow showing validation failed with one error: GDG013 quest graph cycle](docs/images/unity/Screenshot_2026-08-01_165002.png)
 
 *The DFS-based cycle detector reports the full cycle path: `quest_final → quest_intro → quest_forest → quest_final`.*
 
