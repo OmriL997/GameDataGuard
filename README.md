@@ -135,8 +135,8 @@ flowchart TD
 
 - The native layer allocates result strings with `new char[]`; `gdg_free_string` calls `delete[]`. `gdg_free_string(nullptr)` is a no-op.
 - The native buffer is always released in a C# `finally` block — unconditionally, regardless of exceptions or early returns.
-- The path is passed as a `byte[]` pre-encoded to UTF-8, with an explicit `\0` terminator. This avoids relying on `CharSet.Ansi` (which uses the system code page) and works across both Mono and IL2CPP scripting backends.
-- Every exception type at the interop boundary (`DllNotFoundException`, `EntryPointNotFoundException`, `BadImageFormatException`, and a general catch-all) is converted to a `tool_error` result. `ValidateDirectory` never throws.
+- The path is passed as a `byte[]` pre-encoded to UTF-8, with an explicit `\0` terminator. This avoids relying on `CharSet.Ansi` and the Windows system code page in the supported Unity Editor environment.
+- Every exception type at the interop boundary (`DllNotFoundException`, `EntryPointNotFoundException`, `BadImageFormatException`, and a general catch-all) is converted to a `tool_error` result. Expected interop and native-loading exceptions are converted into structured `tool_error` results.
 - All C++ exceptions are caught inside the native layer. Nothing propagates into managed code.
 
 ### Plugin placement and loading
@@ -608,7 +608,7 @@ ctest --test-dir build --output-on-failure
 
 **Marshaling results from unmanaged to managed code.** Unity's `JsonUtility` does not handle JSON `null`, optional fields, or arbitrary object shapes. This required deliberately designing the native JSON schema so that all fields are always present (empty string for absent optional values, empty array for absent diagnostic lists).
 
-**UTF-8 string encoding at the P/Invoke boundary.** Passing strings as `byte[]` rather than relying on `CharSet.Ansi` was necessary to ensure UTF-8 paths work correctly regardless of the Windows system code page. This was verified with paths containing non-ASCII characters in the sample localization data.
+**UTF-8 string encoding at the P/Invoke boundary.** Passing strings as `byte[]` rather than relying on `CharSet.Ansi` was necessary to ensure UTF-8 paths work correctly regardless of the Windows system code page. Paths are encoded explicitly as UTF-8 before crossing the P/Invoke boundary, avoiding reliance on the Windows system code page.
 
 **Native library placement and the Plugin Inspector.** Unity resolves `DllImport("gamedataguard_unity")` to `Assets/Plugins/x86_64/gamedataguard_unity.dll` only when the Plugin Inspector is configured correctly. An incorrect setting produces a `DllNotFoundException` at runtime with no visual indication in the Editor — this is caught and surfaced as a `tool_error` result in the UI.
 
@@ -641,7 +641,6 @@ Individual portfolio project developed in 2026. Production-inspired but portfoli
 - The Unity native plugin is built and tested on **Windows x64 only**. No Linux or macOS Unity integration exists.
 - The DLL must be copied manually using `copy_plugin.ps1`. There is no automated build step that integrates with Unity's package import process.
 - There are no automated Unity Editor tests — Unity Editor behavior is verified manually.
-- The Plugin Inspector must be configured by hand after each fresh Unity project open; there is no `.meta` file that permanently encodes the correct settings in a portable way.
 - The cycle detector reports the first cycle found in DFS order. If multiple independent cycles exist in a quest graph, they may not all be reported in one pass.
 - The pack format does not support incremental updates. A full rebuild is required on any data change.
 - Localization files not listed in `manifest.json` are silently ignored.
