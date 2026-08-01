@@ -178,14 +178,19 @@ Default parameters: `-Configuration Release -BuildDir build`. Adjust as needed:
 
 Open `integrations/unity/GameDataGuardUnity/` in the Unity Editor. The plugin will be re-imported automatically.
 
-### Step 4 — Configure the Plugin Inspector
+### Step 4 — Verify the Plugin Inspector settings
 
-Select `Assets/Plugins/x86_64/gamedataguard_unity.dll` in the Project window:
+The committed `.meta` file configures the native plugin for the
+Windows x86-64 Unity Editor.
 
-- **Any Platform**: unchecked
-- **Editor**: checked
-- **Windows > x86_64**: checked
-- Click **Apply**
+Select `Assets/Plugins/x86_64/gamedataguard_unity.dll` and verify:
+
+- Any Platform: unchecked
+- Editor: checked
+- Editor OS: Windows
+- Editor CPU: x86_64
+
+No manual configuration should be required after cloning the repository.
 
 ### Step 5 — Use the EditorWindow
 
