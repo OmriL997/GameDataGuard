@@ -14,9 +14,8 @@
 //
 // UTF-8 marshaling
 // ----------------
-// The directory path is encoded to UTF-8 bytes and passed as a byte array.
-// This approach is portable across Unity's Mono and IL2CPP scripting backends and
-// avoids relying on platform-specific code-page settings.
+// The directory path is encoded as UTF-8 bytes to avoid relying on
+// the Windows system code page in the supported Unity Editor environment.
 //
 // DLL placement
 // -------------
@@ -72,7 +71,6 @@ namespace GameDataGuard.Editor
         /// A ValidationResult on success or partial validation failure.
         /// Returns a tool-error result when the DLL cannot be loaded, an entry point
         /// cannot be found, the image format is wrong, or the returned JSON is malformed.
-        /// Never throws.
         /// </returns>
         internal static ValidationResult ValidateDirectory(string directoryPath)
         {
