@@ -1,5 +1,10 @@
 # GameDataGuard — Architecture
 
+> For a high-level overview and screenshots, see the [README](../README.md).
+> For the complete diagnostic code table, see [validation-reference.md](validation-reference.md).
+
+---
+
 ## Component Responsibilities
 
 ### `DataLoader` (data_loader.hpp / data_loader.cpp)
@@ -72,7 +77,57 @@
 
 ---
 
+## Unity Integration Layer
+
+The following components exist on the `feature/unity-editor-integration` branch and are built only when `GDG_BUILD_UNITY_PLUGIN=ON` is passed to CMake.
+
+### `gamedataguard_unity` (integrations/unity/native/)
+
+**`gamedataguard_unity.h` / `gamedataguard_unity.cpp`** — C ABI bridge compiled as a Windows shared library (`gamedataguard_unity.dll`).
+
+- Exports exactly two `extern "C"` functions:
+  - `gdg_validate_directory_utf8(const char*, char**) → int32_t` — calls `load_game_data()` + `validate()` and serialises the result to a heap-allocated UTF-8 JSON string.
+  - `gdg_free_string(char*)` — releases the heap-allocated string; safe to call with `nullptr`.
+- All C++ exceptions are caught inside the native layer. Nothing propagates into managed code.
+- The result JSON always contains `status`, `errorCount`, `warningCount`, `message`, and `diagnostics[]`. No field is ever JSON `null`; absent optional values use empty string or empty array.
+- `severity` in the JSON is lower-case (`"error"`, `"warning"`, `"info"`) — independent of the upper-case format used by the CLI.
+- Does not print to stdout. Does not touch any global state.
+- The CMake target `gamedataguard_unity` links `gamedataguard_core` as a static dependency. Only this bridge target is built as a DLL; the core remains static.
+
+**Memory contract:** result strings are allocated with `new char[]` and released by `gdg_free_string` via `delete[]`.
+
+### `GameDataGuardNative.cs` (P/Invoke wrapper)
+
+- Declares the two `DllImport` signatures with `CallingConvention.Cdecl`.
+- The directory path is passed as `byte[]` (UTF-8 encoded, explicit `\0` terminator) to avoid relying on `CharSet.Ansi` and the system code page. This is required for non-ASCII paths and works across both Mono and IL2CPP scripting backends.
+- The native `IntPtr` (result string pointer) is always released in a C# `finally` block — unconditionally, regardless of exceptions or early returns.
+- Every exception type at the interop boundary (`DllNotFoundException`, `EntryPointNotFoundException`, `BadImageFormatException`, and a general catch-all) is caught and returned as a `tool_error` result. `ValidateDirectory` never throws.
+
+### `GameDataGuardModels.cs` (C# data models)
+
+- `[Serializable] ValidationResult` — maps to the native JSON schema; deserialized via `JsonUtility.FromJson<T>`.
+- `[Serializable] ValidationDiagnostic` — exposes a computed `Severity` enum parsed from the lower-case string field.
+- Computed properties: `IsPassed`, `IsValidationFailed`, `IsToolError`.
+
+### `GameDataGuardWindow.cs` (Unity EditorWindow)
+
+- Opened via **Tools → GameDataGuard**; does not require Play Mode.
+- `OnGUI()` renders: directory path field + folder-picker button, Validate + Clear buttons, status banner, scrollable diagnostic list.
+- **Validate** is disabled until a non-empty path is entered.
+- Calls `GameDataGuardNative.ValidateDirectory(path)`, then displays the returned `ValidationResult`.
+- Presentation logic stays entirely in C#; the core has no knowledge of Unity types or IMGUI.
+
+### `copy_plugin.ps1` (deploy script)
+
+- Copies `build/<Config>/gamedataguard_unity.dll` to `Assets/Plugins/x86_64/`.
+- Warns if a Unity lock file is detected (Unity should be closed before copying).
+- Parameters: `-Configuration` (default `Release`), `-BuildDir` (default `build`).
+
+---
+
 ## Data Flow
+
+### CLI flow
 
 ```
 argv
@@ -97,6 +152,29 @@ write_json_report()  → bool (if --report supplied)
   │
   ▼
 exit 0
+```
+
+### Unity EditorWindow flow
+
+```
+GameDataGuardWindow.cs
+  │  ValidateDirectory(path)
+  ▼
+GameDataGuardNative.cs  ── P/Invoke (Cdecl, UTF-8 byte[]) ──▶  gdg_validate_directory_utf8
+                                                                   │
+                                                                   ▼
+                                                           load_game_data() + validate()
+                                                                   │
+                                                                   ▼ ValidationResult (C++)
+                                                           make_result_json()  → char* (new char[])
+                                                                   │
+  ◀── IntPtr → byte[] → string ──────────────────────────────────┘
+  │   finally: gdg_free_string(ptr)
+  ▼
+JsonUtility.FromJson<ValidationResult>
+  │
+  ▼
+GameDataGuardWindow.cs  →  DrawSummaryBanner() + DrawDiagnosticList()
 ```
 
 ---
@@ -140,6 +218,8 @@ validate(GameData) {
 
 ## Mermaid Diagram
 
+### CLI
+
 ```mermaid
 flowchart TD
     argv([argv])
@@ -161,6 +241,26 @@ flowchart TD
     validator -->|no errors| packer
     packer --> out
     reporter --> out
+```
+
+### Unity integration
+
+```mermaid
+flowchart TD
+    window["GameDataGuardWindow.cs\n(EditorWindow)"]
+    native["GameDataGuardNative.cs\n(P/Invoke)"]
+    abi["gdg_validate_directory_utf8\n(gamedataguard_unity.dll)"]
+    core["gamedataguard_core\nload_game_data + validate"]
+    json["make_result_json\n(nlohmann/json → char*)"]
+    models["JsonUtility.FromJson\nValidationResult (C#)"]
+
+    window -->|"ValidateDirectory(path)"| native
+    native -->|"UTF-8 byte[] + out IntPtr\nCdecl"| abi
+    abi --> core
+    core -->|ValidationResult| json
+    json -->|"IntPtr (finally: gdg_free_string)"| native
+    native -->|"JSON string"| models
+    models --> window
 ```
 
 ---
@@ -264,3 +364,19 @@ Some failures (missing required file, malformed JSON) prevent any further proces
 ### Atomic file writing
 
 Both the JSON reporter and the packer write to a `.tmp` file and rename atomically. This means a partially-written file will never appear at the intended path even if the process is interrupted.
+
+### C-compatible ABI for the Unity plugin
+
+Exporting `extern "C"` functions eliminates C++ name mangling and ABI fragility across compiler versions, STL implementations, and C++ runtimes. The ABI surface is intentionally minimal: one validation function and one free function. All C++ types, exceptions, and allocators stay behind this boundary.
+
+### JSON as the cross-language result type
+
+Rather than trying to expose `ValidationResult` as a C struct or flatten it into separate out-parameters, the bridge serialises the result to a JSON string. This keeps the C# side simple (one `JsonUtility.FromJson` call), avoids manual field marshaling, and means the result schema can be extended without changing the exported function signature.
+
+### `JsonUtility` constraints drive the JSON schema
+
+Unity's `JsonUtility.FromJson<T>` does not handle JSON `null`, optional fields, or polymorphic objects. The native JSON schema is designed so that all fields are always present: `path` is always a string (empty when no pointer applies), `diagnostics` is always an array (empty on success), and `message` is always a string (empty when unused). This removes all null-safety concerns from the C# layer.
+
+### No global state in the validation core
+
+All state is parameter-passed or locally owned. This makes the validation functions safe to call repeatedly from any context — including repeated calls in the Unity bridge test suite, which verifies that no state leaks between invocations.
