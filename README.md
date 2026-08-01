@@ -136,7 +136,7 @@ flowchart TD
 - The native layer allocates result strings with `new char[]`; `gdg_free_string` calls `delete[]`. `gdg_free_string(nullptr)` is a no-op.
 - The native buffer is always released in a C# `finally` block — unconditionally, regardless of exceptions or early returns.
 - The path is passed as a `byte[]` pre-encoded to UTF-8, with an explicit `\0` terminator. This avoids relying on `CharSet.Ansi` and the Windows system code page in the supported Unity Editor environment.
-- Every exception type at the interop boundary (`DllNotFoundException`, `EntryPointNotFoundException`, `BadImageFormatException`, and a general catch-all) is converted to a `tool_error` result. Expected interop and native-loading exceptions are converted into structured `tool_error` results.
+- Expected interop and native-loading exceptions are converted into structured `tool_error` results.
 - All C++ exceptions are caught inside the native layer. Nothing propagates into managed code.
 
 ### Plugin placement and loading
@@ -623,7 +623,10 @@ ctest --test-dir build --output-on-failure
 
 ## Development Scope
 
-Individual portfolio project developed in 2026. Production-inspired but portfolio-scale — not deployed in a shipping title.
+- Developer: Solo project
+- Core validator and packaging tool: 3 days
+- Unity Editor integration: 2 days
+- Development year: 2026
 
 **Components implemented:**
 
